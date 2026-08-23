@@ -25,6 +25,23 @@ Services are orchestrated via `compose.yml` using Docker/Podman.
 
 ## Build & Run Commands
 
+```bash
+## Build
+
+```bash
+# Build all services defined in compose file
+podman-compose build
+
+# Build without using cache
+podman-compose build --no-cache
+
+# Build and start in one go
+podman-compose up -d --build
+
+# Build Images
+podman-compose up -d --build 
+```
+
 ### Local Development
 
 ```bash
