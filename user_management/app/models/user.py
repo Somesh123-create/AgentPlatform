@@ -1,11 +1,16 @@
 from datetime import datetime
 from sqlalchemy import DateTime, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-
+from enum import Enum
 
 class Base(DeclarativeBase):
     pass
 
+
+class UserRole(str, Enum):
+    USER = "USER"
+    ADMIN = "ADMIN"
+    MANAGER = "MANAGER"
 
 class User(Base):
 
@@ -33,9 +38,9 @@ class User(Base):
         nullable=False,
     )
 
-    role: Mapped[str] = mapped_column(
+    role: Mapped[UserRole] = mapped_column(
         String(50),
-        default="USER",
+        default=UserRole.USER,
         nullable=False,
     )
 

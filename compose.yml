@@ -23,8 +23,6 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-      # Enable pgvector during first database initialization
       - ./postgresql/init/enable-vector.sql:/docker-entrypoint-initdb.d/enable-vector.sql:ro
 
     healthcheck:
@@ -87,13 +85,15 @@ services:
 
 
   # ============================================================
-  # User management API
+  # User Management API
   # ============================================================
 
   user-management:
     container_name: agent-user-management
 
     restart: unless-stopped
+
+    init: true
 
     build:
       context: .
@@ -103,24 +103,46 @@ services:
       APP_NAME: ${APP_NAME}
       APP_ENV: ${APP_ENV}
       DEBUG: ${DEBUG}
+
+      # PostgreSQL
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_HOST: postgres
-      POSTGRES_PORT: ${POSTGRES_PORT}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+
+      # Redis
       REDIS_HOST: redis
-      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PORT: ${REDIS_PORT:-6379}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # JWT
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
-      JWT_ALGORITHM: HS256
-      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
 
     ports:
-      - "8000:8000"
+      - "${USER_MANAGEMENT_PORT:-8000}:8000"
+
+    volumes:
+      # Development: local source code → container
+      - ./user_management/app:/app/app
+
+    command:
+      [
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000",
+        "--reload"
+      ]
 
     depends_on:
       postgres:
         condition: service_healthy
+
       redis:
         condition: service_healthy
 

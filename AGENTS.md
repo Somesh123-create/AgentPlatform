@@ -13,14 +13,65 @@ Services are orchestrated via `compose.yml`.
 ## Build & Run
 
 ```bash
+# Build all services defined in compose file
+podman-compose build
+
+# Build without using cache
+podman-compose build --no-cache
+
+# Build and start in one go
+podman-compose up -d --build
+
+# Build Images
+podman-compose up -d --build 
+
 # Start all services
 docker compose up -d
+
+# Start containers in detached mode
+podman-compose up -d
+
+# Start containers in foreground (logs visible)
+podman-compose up
+
+# Restart containers
+podman-compose restart
 
 # View logs
 docker compose logs -f
 
 # Stop services
 docker compose down
+
+# Stop containers but keep them
+podman-compose stop
+
+# Stop and remove containers, networks, volumes
+podman-compose down
+
+# Remove containers, networks, volumes, and images
+podman-compose down --rmi all --volumes
+
+
+# View logs for all services
+podman-compose logs
+
+# View logs for a specific service
+podman-compose logs <service_name>
+
+# Check container status
+podman-compose ps
+
+
+# Run a command inside a running container
+podman-compose exec <service_name> <command>
+
+# Open a shell inside a container
+podman-compose exec <service_name> sh
+# or
+podman-compose exec <service_name> bash
+
+
 ```
 
 The FastAPI app runs on port 8000 (see `user_management/Dockerfile`).

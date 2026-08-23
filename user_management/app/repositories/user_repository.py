@@ -42,3 +42,20 @@ class UserRepository:
         await self.db.refresh(user)
 
         return user
+    
+
+    async def delete(
+            self,
+            user_id: int,
+        ) -> None:
+
+        user = await self.get_by_id(user_id)
+        if not user:
+            raise ValueError("User not found.")
+        try:
+            await self.db.delete(user)
+            await self.db.commit()
+            return "User deleted successfully."
+        except Exception as e:
+            await self.db.rollback()
+            return f"Error deleting user: {str(e)}"

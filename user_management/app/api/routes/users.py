@@ -38,3 +38,19 @@ async def get_user_by_id(
         raise HTTPException(status_code=404, detail="User not found.")
     
     return user
+
+@router.delete("/{user_id}", response_model=str)
+async def delete_user(
+        user_id: int,
+        current_user: Annotated[UserResponse, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(get_db)],
+    ):
+    user_repo = UserRepository(db)
+    user_service = UserService(user_repo)
+    
+    delete_message = await user_service.delete_user(user_id)
+    
+    if not delete_message:
+        raise HTTPException(status_code=404, detail="User not found.")
+    
+    return delete_message

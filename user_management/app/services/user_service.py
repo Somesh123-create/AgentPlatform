@@ -27,3 +27,10 @@ class UserService:
         if not user:
             raise ValueError("User not found.")
         return user
+
+    async def delete_user(self, user_id: int) -> str:
+        delete_message = await self.user_repository.delete(user_id)
+        if delete_message is None:
+            raise ValueError("User not found.")
+        return delete_message
+        
