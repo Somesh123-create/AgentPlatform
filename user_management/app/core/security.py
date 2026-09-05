@@ -1,47 +1,39 @@
-from datetime import datetime, timedelta, timezone
-from jose import JWTError, jwt
+from agent_auth import JWTManager
+
 from app.core.config import settings
 
 
-
-def create_access_token(
-        user_id: int,
-    ) -> str:
-
-    expire = datetime.now(timezone.utc) + timedelta(
-        minutes=settings.jwt_access_token_expire_minutes
-    )
-
-    payload = {
-        "sub": str(user_id),
-        "exp": expire,
-    }
-
-    return jwt.encode(
-        payload,
-        settings.jwt_secret_key,
-        algorithm=settings.jwt_algorithm,
-    )
+jwt_manager = JWTManager(
+    secret_key=settings.jwt_secret_key,
+    algorithm=settings.jwt_algorithm,
+    access_token_expire_minutes=settings.jwt_access_token_expire_minutes,
+)
 
 
-def decode_access_token(
-        token: str,
-    ) -> int | None:
+def create_access_token(user_id: int, role: str) -> str:
+    """Create a JWT access token for the given user ID.
+
+    Uses the shared agent-auth JWTManager for token creation.
+    """
+    return jwt_manager.create_access_token(user_id=user_id, role=role)
+
+
+def decode_access_token(token: str) -> int | None:
+    """Decode a JWT access token and return the user ID.
+
+    Uses the shared agent-auth JWTManager for token decoding.
+    """
+    payload = jwt_manager.decode_access_token(token)
+    if payload is None:
+        return None
+
+    subject = payload.get("sub")
+    if subject is None:
+        return None
 
     try:
-
-        payload = jwt.decode(
-            token,
-            settings.jwt_secret_key,
-            algorithms=[settings.jwt_algorithm],
-        )
-
-        user_id = payload.get("sub")
-
-        if user_id is None:
-            return None
-
-        return int(user_id)
-
-    except (JWTError, ValueError):
+        user_id = int(subject)
+    except (TypeError, ValueError):
         return None
+
+    return user_id if user_id > 0 else None

@@ -1,51 +1,38 @@
-from typing import Annotated
+from collections.abc import AsyncGenerator
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
-from app.core.security import decode_access_token
+from agent_auth.dependencies import create_auth_dependency
+
+from app.core.database import database
+from app.core.security import jwt_manager
+from app.models.user import User
 from app.repositories.user_repository import UserRepository
 
 
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/auth/login"
+agent_current_user = create_auth_dependency(
+    jwt_manager,
+    token_url="/auth/login",
 )
 
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async for session in database.session():
+        yield session
+
+
 async def get_current_user(
-        token: Annotated[str, Depends(oauth2_scheme)],
-        db: Annotated[AsyncSession, Depends(get_db)],
-    ):
-    user_id = decode_access_token(token)
-    
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-        
-    user_repo = UserRepository(db)
-    
-    user = await user_repo.get_by_id(user_id)
-    
+        current_user=Depends(agent_current_user),
+        db: AsyncSession = Depends(get_db),
+    ) -> User:
+    user = await UserRepository(db).get_by_id(current_user.user_id)
     if user is None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
+            status_code=401,
+            detail="User not found.",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     return user
-
-
-def require_admin(current_user):
-    if current_user.role != "ADMIN":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to perform this action",
-        )
     
-    return current_user
-

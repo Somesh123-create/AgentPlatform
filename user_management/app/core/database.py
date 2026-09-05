@@ -1,29 +1,20 @@
-from collections.abc import AsyncGenerator
-
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+from agent_db import Database
 
 from app.core.config import settings
 
 
-engine = create_async_engine(
-    settings.database_url,
-    echo=settings.debug,
-    pool_pre_ping=True,
+DATABASE_URL = (
+    f"postgresql+asyncpg://"
+    f"{settings.postgres_user}:"
+    f"{settings.postgres_password}@"
+    f"{settings.postgres_host}:"
+    f"{settings.postgres_port}/"
+    f"{settings.postgres_db}"
 )
 
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+database = Database(DATABASE_URL)
+engine = database.engine
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as session:
-        yield session
-        
+
+

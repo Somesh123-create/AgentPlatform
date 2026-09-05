@@ -7,17 +7,7 @@ asyncpg
 pydantic
 pydantic-settings
 
-redis
-python-multipart
-
-python-jose[cryptography]
-bcrypt==4.1.2
-
-email-validator
-
-pytest
-pytest-asyncio
-httpx
+python-dotenv
 
 agent-db @ git+https://github.com/Somesh123-create/AgentPlatformPackages.git@v1.1.0#subdirectory=packages/agent-db
 agent-auth @ git+https://github.com/Somesh123-create/AgentPlatformPackages.git@v1.1.0#subdirectory=packages/agent-auth

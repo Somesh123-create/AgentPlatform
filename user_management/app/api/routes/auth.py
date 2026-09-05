@@ -4,12 +4,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import get_db
+
+
+from app.api.dependencies import get_db
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import LoginRequest, TokenResponse
 from app.schemas.user import UserCreate, UserResponse
+
 from app.services.auth_service import AuthService
 from app.services.user_service import UserService
+
+
 
 
 router = APIRouter(
