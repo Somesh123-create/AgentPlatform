@@ -25,17 +25,6 @@ RUN pip install --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 
-
-# Install private agent-llm package
-RUN pip install --no-cache-dir \
-    "agent-llm @ git+https://github.com/Somesh123-create/AgentPlatformPackages.git@v1.1.0#subdirectory=packages/agent-llm"
-
-RUN pip install --no-cache-dir \
-    "agent-auth @ git+https://github.com/Somesh123-create/AgentPlatformPackages.git@v1.1.0#subdirectory=packages/agent-auth"
-
-RUN pip install --no-cache-dir \
-    "agent-db @ git+https://github.com/Somesh123-create/AgentPlatformPackages.git@v1.1.0#subdirectory=packages/agent-db"
-
 COPY app ./app
 
 RUN addgroup --system app && adduser --system --ingroup app app && \
