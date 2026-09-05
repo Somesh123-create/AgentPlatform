@@ -1,0 +1,1 @@
+"""Validation and build primitives for immutable MCP versions."""

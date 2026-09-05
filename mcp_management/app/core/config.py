@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_access_token_expire_minutes: int = 30
     auth_token_url: str = "http://localhost:8000/auth/login"
+    artifact_storage_path: str = "/tmp/mcp-artifacts"
 
     model_config = SettingsConfigDict(
         env_file=".env",
