@@ -18,6 +18,10 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 30
     auth_token_url: str = "http://localhost:8000/auth/login"
     artifact_storage_path: str = "/tmp/mcp-artifacts"
+    container_engine: str = "podman"
+    build_timeout_seconds: int = 300
+    build_image_namespace: str = "agenthub-mcp"
+    build_log_limit: int = 100_000
 
     model_config = SettingsConfigDict(
         env_file=".env",

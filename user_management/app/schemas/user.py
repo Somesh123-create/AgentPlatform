@@ -17,6 +17,21 @@ class UserCreate(BaseModel):
         return validate_password_length(password)
 
 
+class UserUpdate(BaseModel):
+    name: str | None = None
+    email: EmailStr | None = None
+
+
+class PasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password(cls, password: str) -> str:
+        return validate_password_length(password)
+
+
 class UserResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
