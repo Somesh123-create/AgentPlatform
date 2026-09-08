@@ -2,10 +2,9 @@ import json
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.mcp_build_job import MCPBuildJob, MCPBuildJobStatus
 from app.models.mcp_version import MCPVersion
 from app.repositories.version import VersionRepository
-from app.schemas.version import MCPBuildRequest, MCPVersionCreate
+from app.schemas.version import MCPVersionCreate
 
 
 class VersionService:
@@ -28,15 +27,3 @@ class VersionService:
 
     async def list(self, mcp_id: int) -> list[MCPVersion]:
         return await self.repository.list_versions(mcp_id)
-
-    async def enqueue_build(self, version: MCPVersion, data: MCPBuildRequest) -> MCPBuildJob:
-        existing = await self.repository.get_build_job(version.id, data.idempotency_key)
-        if existing:
-            return existing
-
-        job = MCPBuildJob(
-            version_id=version.id,
-            idempotency_key=data.idempotency_key,
-            status=MCPBuildJobStatus.QUEUED,
-        )
-        return await self.repository.create_build_job(job)

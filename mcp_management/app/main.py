@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from app.api.router import api_router
 from app.db.base import Base
 from app.db.session import engine
-from app.models import mcp, mcp_build_job, mcp_version
+from app.models import mcp, mcp_version
 
 
 @asynccontextmanager

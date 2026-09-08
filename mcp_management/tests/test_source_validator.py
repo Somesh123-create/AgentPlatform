@@ -4,7 +4,7 @@ import zipfile
 
 import pytest
 
-from app.build.validator import ArchiveValidationError, validate_zip_archive
+from app.source.validator import ArchiveValidationError, validate_zip_archive
 
 
 def make_archive(entries: dict[str, bytes]) -> bytes:

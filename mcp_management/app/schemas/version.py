@@ -2,8 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from app.models.mcp_build_job import MCPBuildJobStatus
-from app.models.mcp_version import MCPSourceKind, MCPVersionStatus
+from app.models.mcp_version import MCPSourceKind
 
 
 class MCPVersionCreate(BaseModel):
@@ -21,26 +20,5 @@ class MCPVersionResponse(BaseModel):
     source_digest: str
     source_reference: str | None
     manifest: dict[str, object]
-    image_reference: str | None
-    image_digest: str | None
-    status: MCPVersionStatus
-    failure_reason: str | None
     created_at: datetime
     updated_at: datetime
-    published_at: datetime | None
-
-
-class MCPBuildRequest(BaseModel):
-    idempotency_key: str = Field(min_length=1, max_length=255)
-
-
-class MCPBuildJobResponse(BaseModel):
-    id: int
-    version_id: int
-    idempotency_key: str
-    status: MCPBuildJobStatus
-    attempt_count: int
-    error_message: str | None
-    created_at: datetime
-    started_at: datetime | None
-    finished_at: datetime | None

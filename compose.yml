@@ -83,7 +83,6 @@ services:
     networks:
       - mynetwork
 
-
   # ============================================================
   # User Management API
   # ============================================================
@@ -183,6 +182,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
+      ARTIFACT_STORAGE_PATH: /var/lib/mcp-artifacts
 
       # JWT
       JWT_SECRET_KEY: ${JWT_SECRET_KEY}
@@ -194,6 +194,7 @@ services:
 
     volumes:
       - ./mcp_management/app:/app/app
+      - mcp_artifacts:/var/lib/mcp-artifacts
 
     command:
       [
@@ -224,7 +225,6 @@ services:
     networks:
       - mynetwork  
 
-
 # ==============================================================
 # Persistent Volumes
 # ==============================================================
@@ -236,6 +236,9 @@ volumes:
 
   redis_data:
     name: agent_redis_data
+
+  mcp_artifacts:
+    name: agent_mcp_artifacts
 
 
 # ==============================================================

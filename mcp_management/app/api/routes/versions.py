@@ -9,14 +9,9 @@ from agent_auth import CurrentUser
 from app.core.auth import current_user
 from app.core.config import settings
 from app.db.session import get_db
-from app.build.storage import SourceArtifactStore
-from app.build.validator import MAX_ARCHIVE_BYTES, ArchiveValidationError, validate_zip_archive
-from app.schemas.version import (
-    MCPBuildJobResponse,
-    MCPBuildRequest,
-    MCPVersionCreate,
-    MCPVersionResponse,
-)
+from app.source.storage import SourceArtifactStore
+from app.source.validator import MAX_ARCHIVE_BYTES, ArchiveValidationError, validate_zip_archive
+from app.schemas.version import MCPVersionCreate, MCPVersionResponse
 from app.services.mcp import MCPService
 from app.services.version import VersionService
 
@@ -42,13 +37,8 @@ def _version_response(version):
         source_digest=version.source_digest,
         source_reference=version.source_reference,
         manifest=json.loads(version.manifest),
-        image_reference=version.image_reference,
-        image_digest=version.image_digest,
-        status=version.status,
-        failure_reason=version.failure_reason,
         created_at=version.created_at,
         updated_at=version.updated_at,
-        published_at=version.published_at,
     )
 
 
@@ -81,8 +71,7 @@ async def upload_version(
         raise HTTPException(status_code=422, detail=str(error)) from error
 
     SourceArtifactStore(settings.artifact_storage_path).put(validated.digest, content)
-    service = VersionService(db)
-    version = await service.create(
+    version = await VersionService(db).create(
         mcp_id,
         MCPVersionCreate(
             source_kind="ZIP",
@@ -117,19 +106,3 @@ async def get_version(
     if not version:
         raise HTTPException(status_code=404, detail="MCP version not found")
     return _version_response(version)
-
-
-@router.post("/{version_number}/build", response_model=MCPBuildJobResponse, status_code=status.HTTP_202_ACCEPTED)
-async def build_version(
-    mcp_id: int,
-    version_number: int,
-    data: MCPBuildRequest,
-    authenticated_user: Annotated[CurrentUser, Depends(current_user)],
-    db: AsyncSession = Depends(get_db),
-):
-    await _owned_mcp(mcp_id, authenticated_user.user_id, db)
-    service = VersionService(db)
-    version = await service.get(mcp_id, version_number)
-    if not version:
-        raise HTTPException(status_code=404, detail="MCP version not found")
-    return await service.enqueue_build(version, data)

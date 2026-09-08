@@ -28,7 +28,6 @@ class ValidatedArchive:
 def validate_zip_archive(content: bytes) -> ValidatedArchive:
     if len(content) > MAX_ARCHIVE_BYTES:
         raise ArchiveValidationError("source archive exceeds the maximum size")
-
     try:
         archive = zipfile.ZipFile(io.BytesIO(content))
     except zipfile.BadZipFile as error:
@@ -55,7 +54,6 @@ def validate_zip_archive(content: bytes) -> ValidatedArchive:
                 raise ArchiveValidationError("source archive contains a symbolic link")
             if entry.is_dir():
                 continue
-
             total_size += entry.file_size
             if total_size > MAX_UNCOMPRESSED_BYTES:
                 raise ArchiveValidationError("source archive expands beyond the maximum size")
@@ -65,7 +63,6 @@ def validate_zip_archive(content: bytes) -> ValidatedArchive:
 
         if manifest_info is None:
             raise ArchiveValidationError(f"source archive must contain {MANIFEST_NAME}")
-
         try:
             manifest = json.loads(archive.read(manifest_info))
         except (UnicodeDecodeError, json.JSONDecodeError) as error:

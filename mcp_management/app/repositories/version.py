@@ -1,7 +1,8 @@
+from datetime import datetime
+
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.mcp_build_job import MCPBuildJob
 from app.models.mcp_version import MCPVersion
 
 
@@ -37,18 +38,3 @@ class VersionRepository:
             .order_by(MCPVersion.version.desc())
         )
         return list(result.scalars().all())
-
-    async def get_build_job(self, version_id: int, idempotency_key: str) -> MCPBuildJob | None:
-        result = await self.db.execute(
-            select(MCPBuildJob).where(
-                MCPBuildJob.version_id == version_id,
-                MCPBuildJob.idempotency_key == idempotency_key,
-            )
-        )
-        return result.scalar_one_or_none()
-
-    async def create_build_job(self, job: MCPBuildJob) -> MCPBuildJob:
-        self.db.add(job)
-        await self.db.commit()
-        await self.db.refresh(job)
-        return job
