@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import get_current_user, get_db
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
-from app.schemas.user import UserResponse
+from app.schemas.user import PasswordUpdate, UserResponse, UserUpdate
 from app.services.user_service import UserService
 
 
@@ -21,6 +21,34 @@ async def get_current_user_info(
         current_user: Annotated[User, Depends(get_current_user)],
     ):
     return current_user
+
+
+@router.patch("/me", response_model=UserResponse)
+async def update_current_user(
+        user_update: UserUpdate,
+        current_user: Annotated[User, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(get_db)],
+    ):
+    user_service = UserService(UserRepository(db))
+
+    try:
+        return await user_service.update_profile(current_user, user_update)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+
+
+@router.patch("/me/password", response_model=UserResponse)
+async def update_current_user_password(
+        password_update: PasswordUpdate,
+        current_user: Annotated[User, Depends(get_current_user)],
+        db: Annotated[AsyncSession, Depends(get_db)],
+    ):
+    user_service = UserService(UserRepository(db))
+
+    try:
+        return await user_service.update_password(current_user, password_update)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @router.get("/{user_id}", response_model=UserResponse)

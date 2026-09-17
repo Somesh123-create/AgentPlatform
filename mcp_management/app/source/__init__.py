@@ -1,0 +1,1 @@
+"""MCP source archive validation and storage."""

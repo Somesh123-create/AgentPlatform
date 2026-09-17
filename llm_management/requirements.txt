@@ -1,0 +1,11 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+asyncpg
+pydantic
+pydantic-settings
+python-dotenv
+cryptography
+agent-auth @ git+https://github.com/Somesh123-create/AgentPlatformPackages.git@v1.1.0#subdirectory=packages/agent-auth
+pytest
+httpx

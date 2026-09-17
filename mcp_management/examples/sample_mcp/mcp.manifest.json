@@ -1,0 +1,10 @@
+{
+  "name": "sample-mcp",
+  "version": "1.0.0",
+  "protocol": "STDIO",
+  "requirements": "requirements.txt",
+  "command": [
+    "python",
+    "server.py"
+  ]
+}

@@ -49,21 +49,11 @@
         │   │   ├── permission_service.py
         │   │   └── invocation_service.py
         │   │
-        │   ├── build/
-        │   │   ├── validator.py
-        │   │   ├── security.py
-        │   │   ├── builder.py
-        │   │   └── registry.py
-        │   │
         │   ├── runtime/
         │   │   ├── manager.py
         │   │   ├── lifecycle.py
         │   │   ├── podman.py
         │   │   └── health.py
-        │   │
-        │   ├── workers/
-        │   │   ├── build_worker.py
-        │   │   └── execution_worker.py
         │   │
         │   └── main.py
         │

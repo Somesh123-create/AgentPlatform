@@ -234,3 +234,7 @@ Follows a repository-service pattern:
 - **When adding new API routes**: Follow the repository-service pattern in `user_management/app/api/routes/`.
 - **When debugging database issues**: Check the async engine configuration in `user_management/app/core/database.py` and ensure pgvector is enabled.
 - **When adding environment variables**: Update both `.env` and `.env.example`; update `compose.yml` if the variable is used in service configuration.
+
+
+
+# podman-compose up -d --build postgres redis
