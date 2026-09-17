@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.mcp_version import MCPVersion
@@ -18,7 +19,11 @@ class VersionRepository:
 
     async def create_version(self, version: MCPVersion) -> MCPVersion:
         self.db.add(version)
-        await self.db.commit()
+        try:
+            await self.db.commit()
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
         await self.db.refresh(version)
         return version
 
@@ -27,6 +32,15 @@ class VersionRepository:
             select(MCPVersion).where(
                 MCPVersion.mcp_id == mcp_id,
                 MCPVersion.version == version_number,
+            )
+        )
+        return result.scalar_one_or_none()
+
+    async def get_by_id(self, mcp_id: int, version_id: int) -> MCPVersion | None:
+        result = await self.db.execute(
+            select(MCPVersion).where(
+                MCPVersion.mcp_id == mcp_id,
+                MCPVersion.id == version_id,
             )
         )
         return result.scalar_one_or_none()

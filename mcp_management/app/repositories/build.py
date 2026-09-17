@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.build import MCPBuild
@@ -10,7 +11,11 @@ class BuildRepository:
 
     async def create(self, build: MCPBuild) -> MCPBuild:
         self.db.add(build)
-        await self.db.commit()
+        try:
+            await self.db.commit()
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
         await self.db.refresh(build)
         return build
 
@@ -22,15 +27,23 @@ class BuildRepository:
         result = await self.db.execute(select(MCPBuild).where(MCPBuild.mcp_id == mcp_id).order_by(MCPBuild.created_at.desc()))
         return list(result.scalars().all())
 
-    async def latest_succeeded_for_version(self, version_id: int) -> MCPBuild | None:
+    async def latest_succeeded_for_version(self, mcp_id: int, version_id: int) -> MCPBuild | None:
         result = await self.db.execute(
             select(MCPBuild)
-            .where(MCPBuild.version_id == version_id, MCPBuild.status == "SUCCEEDED")
+            .where(
+                MCPBuild.mcp_id == mcp_id,
+                MCPBuild.version_id == version_id,
+                MCPBuild.status == "SUCCEEDED",
+            )
             .order_by(MCPBuild.created_at.desc())
         )
         return result.scalar_one_or_none()
 
     async def save(self, build: MCPBuild) -> MCPBuild:
-        await self.db.commit()
+        try:
+            await self.db.commit()
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
         await self.db.refresh(build)
         return build

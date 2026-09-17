@@ -37,7 +37,10 @@ async def build_version(
     db: AsyncSession = Depends(get_db),
 ):
     version = await _owned_version(mcp_id, version_number, authenticated_user.user_id, db)
-    return await BuildService(db).build_version(mcp_id, version)
+    try:
+        return await BuildService(db).build_version(mcp_id, version)
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
 
 
 @router.get("/builds", response_model=list[MCPBuildResponse])

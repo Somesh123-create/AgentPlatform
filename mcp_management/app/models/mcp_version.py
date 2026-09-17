@@ -20,6 +20,7 @@ class MCPVersion(Base):
     __tablename__ = "mcp_versions"
     __table_args__ = (
         UniqueConstraint("mcp_id", "version", name="uq_mcp_versions_mcp_version"),
+        UniqueConstraint("mcp_id", "id", name="uq_mcp_versions_mcp_id_id"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)

@@ -8,6 +8,7 @@ from typing import Annotated
 
 from app.core.auth import current_user
 from app.db.session import get_db
+from app.repositories.version import VersionRepository
 from app.runtime.ephemeral import EphemeralRuntime
 
 
@@ -24,6 +25,16 @@ async def _owned_mcp(mcp_id: int, user_id: int, db: AsyncSession):
     return mcp
 
 
+async def _runtime_version_id(mcp_id: int, version_ref: int, db: AsyncSession) -> int:
+    repository = VersionRepository(db)
+    version = await repository.get_by_id(mcp_id, version_ref)
+    if version is None:
+        version = await repository.get_version(mcp_id, version_ref)
+    if version is None:
+        raise HTTPException(status_code=404, detail="MCP version not found")
+    return version.id
+
+
 @router.post("/{version_id}/invoke-tool", response_model=dict)
 async def invoke_tool(
     mcp_id: int,
@@ -33,8 +44,10 @@ async def invoke_tool(
     tool_name: str = Body(...),
     tool_input: dict = Body(...),
 ):
+    await _owned_mcp(mcp_id, authenticated_user.user_id, db)
+    resolved_version_id = await _runtime_version_id(mcp_id, version_id, db)
     runtime = EphemeralRuntime(db)
-    return await runtime.invoke_tool(mcp_id, version_id, tool_name, tool_input)
+    return await runtime.invoke_tool(mcp_id, resolved_version_id, tool_name, tool_input)
 
 
 @router.post("/{version_id}/list-tools", response_model=dict)
@@ -44,5 +57,7 @@ async def list_tools(
     authenticated_user: Annotated[CurrentUser, Depends(current_user)],
     db: AsyncSession = Depends(get_db),
 ):
+    await _owned_mcp(mcp_id, authenticated_user.user_id, db)
+    resolved_version_id = await _runtime_version_id(mcp_id, version_id, db)
     runtime = EphemeralRuntime(db)
-    return await runtime.list_tools(mcp_id, version_id)
+    return await runtime.list_tools(mcp_id, resolved_version_id)

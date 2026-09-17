@@ -139,17 +139,7 @@ class EphemeralRuntime:
 
         build_repo = BuildRepository(self.db)
 
-        build = await build_repo.latest_succeeded_for_version(
-            version_id
-        )
-        print("Build:", str(build))
-        if not build:
-            return None
-
-        if build.mcp_id != mcp_id:
-            return None
-
-        return build
+        return await build_repo.latest_succeeded_for_version(mcp_id, version_id)
 
     # ============================================================
     # CONTAINER COMMAND
@@ -172,6 +162,8 @@ class EphemeralRuntime:
 
             # Automatically remove the container.
             "--rm",
+
+            "--interactive",
 
             # Security restrictions.
             "--read-only",

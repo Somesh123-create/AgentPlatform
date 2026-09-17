@@ -24,7 +24,16 @@ class BuildService:
         return await self.repository.get(build_id)
 
     async def build_version(self, mcp_id: int, version: MCPVersion) -> MCPBuild:
-        build = await self.repository.create(MCPBuild(mcp_id=mcp_id, version_id=version.id))
+        if version.mcp_id != mcp_id:
+            raise ValueError("MCP version does not belong to the requested MCP.")
+
+        build = await self.repository.create(
+            MCPBuild(
+                mcp_id=mcp_id,
+                version_id=version.id,
+                version=version.version,
+            )
+        )
 
         # Uploaded code is untrusted. It is only copied into a temporary build
         # context and is never imported or executed by the API process.

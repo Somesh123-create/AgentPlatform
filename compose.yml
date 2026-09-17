@@ -225,6 +225,95 @@ services:
     networks:
       - mynetwork  
 
+  # ============================================================
+  # Agent Management Service
+  # ============================================================
+  agent-management:
+    container_name: agent-agent-management
+    restart: unless-stopped
+    init: true
+
+    build:
+      context: ./agent_management
+      dockerfile: Dockerfile
+
+    environment:
+      APP_NAME: ${AGENT_APP_NAME:-Agent Management Service}
+      APP_ENV: ${APP_ENV:-development}
+      DEBUG: ${DEBUG:-true}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+
+    ports:
+      - "${AGENT_MANAGEMENT_PORT:-8002}:8002"
+
+    volumes:
+      - ./agent_management/app:/app/app
+
+    command:
+      ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8002/health').read()\""]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+    networks:
+      - mynetwork
+
+  # ============================================================
+  # LLM Management Service
+  # ============================================================
+  llm-management:
+    container_name: agent-llm-management
+    restart: unless-stopped
+    init: true
+    build:
+      context: ./llm_management
+      dockerfile: Dockerfile
+    environment:
+      APP_NAME: ${LLM_APP_NAME:-LLM Management Service}
+      APP_ENV: ${APP_ENV:-development}
+      DEBUG: ${DEBUG:-false}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+      LLM_ENCRYPTION_KEY: ${LLM_ENCRYPTION_KEY}
+    ports:
+      - "${LLM_MANAGEMENT_PORT:-8003}:8003"
+    volumes:
+      - ./llm_management/app:/app/app
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003", "--reload"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8003/health').read()\""]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    networks:
+      - mynetwork
+
 # ==============================================================
 # Persistent Volumes
 # ==============================================================

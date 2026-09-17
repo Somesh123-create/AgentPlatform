@@ -9,6 +9,7 @@ class MCPBuildResponse(BaseModel):
     id: int
     mcp_id: int
     version_id: int
+    version: int
     status: MCPBuildStatus
     image_ref: str | None
     logs: str

@@ -1,4 +1,5 @@
 from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.mcp import MCP
@@ -11,7 +12,11 @@ class MCPRepository:
 
     async def create(self, mcp: MCP) -> MCP:
         self.db.add(mcp)
-        await self.db.commit()
+        try:
+            await self.db.commit()
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
         await self.db.refresh(mcp)
         return mcp
 
@@ -47,4 +52,8 @@ class MCPRepository:
         ) -> None:
 
         await self.db.delete(mcp)
-        await self.db.commit()
+        try:
+            await self.db.commit()
+        except SQLAlchemyError:
+            await self.db.rollback()
+            raise
