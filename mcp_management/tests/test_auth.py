@@ -11,7 +11,7 @@ from app.core.auth import current_user, jwt_manager
 
 
 def test_mcp_routes_require_current_user():
-    assert len(router.routes) == 5
+    assert len(router.routes) == 6
     for route in router.routes:
         dependency_names = {
             parameter.name

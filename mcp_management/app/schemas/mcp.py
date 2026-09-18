@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.models.mcp import (
     MCPAccess,
@@ -18,6 +18,14 @@ class MCPCreate(BaseModel):
     mcp_type: MCPType
     protocol: MCPProtocol
     access: MCPAccess = MCPAccess.PRIVATE
+
+    @model_validator(mode="after")
+    def validate_type_protocol(self):
+        if self.mcp_type is MCPType.LOCAL and self.protocol is not MCPProtocol.STDIO:
+            raise ValueError("LOCAL MCP servers must use the STDIO protocol")
+        if self.mcp_type is MCPType.REMOTE and self.protocol is MCPProtocol.STDIO:
+            raise ValueError("REMOTE MCP servers must use SSE or STREAMABLE_HTTP")
+        return self
     
     
 class MCPUpdate(BaseModel):

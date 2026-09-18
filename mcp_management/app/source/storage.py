@@ -1,6 +1,10 @@
 from pathlib import Path
 
 
+class ArtifactNotFoundError(FileNotFoundError):
+    pass
+
+
 class SourceArtifactStore:
     def __init__(self, root: str):
         self.root = Path(root)
@@ -13,3 +17,9 @@ class SourceArtifactStore:
             temporary.write_bytes(content)
             temporary.replace(artifact)
         return str(artifact)
+
+    def get(self, digest: str) -> bytes:
+        artifact = self.root / f"{digest}.zip"
+        if not artifact.is_file():
+            raise ArtifactNotFoundError(digest)
+        return artifact.read_bytes()

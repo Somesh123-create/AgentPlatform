@@ -79,3 +79,18 @@ def test_runtime_container_keeps_mcp_stdio_open():
     command = EphemeralRuntime(None)._build_container_command("image:latest")
 
     assert "--interactive" in command
+    assert "MCP_TRANSPORT=stdio" in command
+
+
+def test_runtime_http_container_is_ephemeral_and_loopback_only():
+    from app.runtime.ephemeral import EphemeralRuntime
+
+    command = EphemeralRuntime(None)._build_container_command("image:latest", "streamable-http", 18001)
+
+    assert "--rm" in command
+    assert "127.0.0.1::8000" in command
+    assert "--network" in command
+    assert "bridge" in command
+    assert "--name" in command
+    assert command[command.index("--name") + 1].startswith("agenthub-mcp-")
+    assert "127.0.0.1::8000" in command

@@ -27,13 +27,27 @@ class BuildService:
         if version.mcp_id != mcp_id:
             raise ValueError("MCP version does not belong to the requested MCP.")
 
-        build = await self.repository.create(
-            MCPBuild(
-                mcp_id=mcp_id,
-                version_id=version.id,
-                version=version.version,
+        build = await self.repository.get_for_version(mcp_id, version.id)
+        if build is None:
+            build = await self.repository.create(
+                MCPBuild(
+                    mcp_id=mcp_id,
+                    version_id=version.id,
+                    version=version.version,
+                )
             )
-        )
+        else:
+            build.version = version.version
+            build.status = MCPBuildStatus.QUEUED
+            build.image_ref = None
+            build.logs = ""
+            build.error = None
+            await self.repository.save(build)
+
+        return await self.execute_build(mcp_id, version, build)
+
+    async def execute_build(self, mcp_id: int, version: MCPVersion, build: MCPBuild) -> MCPBuild:
+        """Build an already-created record and persist engine output as it arrives."""
 
         # Uploaded code is untrusted. It is only copied into a temporary build
         # context and is never imported or executed by the API process.
@@ -49,6 +63,8 @@ class BuildService:
             return await self.repository.save(build)
 
         try:
+            build.logs = "Preparing build context...\n"
+            await self.repository.save(build)
             archive = artifact.read_bytes()
             validated = validate_zip_archive(archive)
             manifest = validated.manifest
@@ -66,14 +82,19 @@ class BuildService:
                     source.extractall(context)
                 dockerfile = self._dockerfile(manifest, command)
                 (context / "Dockerfile").write_text(dockerfile, encoding="utf-8")
-                output = await self._run_engine(context, image_ref)
+                output = await self._run_engine(context, image_ref, build)
 
             build.logs = output[-settings.build_log_limit:]
             build.status = MCPBuildStatus.SUCCEEDED
+            build.logs = (build.logs + "\nImage build completed successfully.\n")[-settings.build_log_limit:]
         except (OSError, ValueError, RuntimeError, zipfile.BadZipFile, asyncio.TimeoutError) as error:
             build.status = MCPBuildStatus.FAILED
             build.error = str(error) or "MCP image build failed."
-            build.logs = (build.logs or "")[-settings.build_log_limit:]
+            build.logs = (build.logs + f"\nBuild failed: {build.error}\n")[-settings.build_log_limit:]
+        except Exception as error:
+            build.status = MCPBuildStatus.FAILED
+            build.error = "Unexpected MCP image build failure."
+            build.logs = (build.logs + f"\nBuild failed unexpectedly: {error}\n")[-settings.build_log_limit:]
 
         return await self.repository.save(build)
 
@@ -96,7 +117,7 @@ class BuildService:
             "",
         ])
 
-    async def _run_engine(self, context: Path, image_ref: str) -> str:
+    async def _run_engine(self, context: Path, image_ref: str, build: MCPBuild) -> str:
         # The engine runs only the image build here. Runtime execution is a
         # separate deployment concern and must apply stricter isolation limits.
         process = await asyncio.create_subprocess_exec(
@@ -108,13 +129,24 @@ class BuildService:
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
+        output_lines: list[str] = []
         try:
-            output, _ = await asyncio.wait_for(process.communicate(), settings.build_timeout_seconds)
+            async def stream_output() -> None:
+                if process.stdout is None:
+                    return
+                while line := await process.stdout.readline():
+                    text = line.decode("utf-8", errors="replace")
+                    output_lines.append(text)
+                    build.logs = (build.logs + text)[-settings.build_log_limit:]
+                    await self.repository.save(build)
+
+            await asyncio.wait_for(stream_output(), settings.build_timeout_seconds)
+            await process.wait()
         except asyncio.TimeoutError:
             process.kill()
             await process.communicate()
             raise
-        text = output.decode("utf-8", errors="replace")
+        text = "".join(output_lines)
         if process.returncode != 0:
             raise RuntimeError(text[-settings.build_log_limit:] or "Container image build failed.")
         return text

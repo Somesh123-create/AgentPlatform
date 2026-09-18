@@ -10,6 +10,7 @@ pydantic-settings
 
 python-dotenv
 python-multipart
+mcp>=1.9,<2
 
 agent-db @ git+https://github.com/Somesh123-create/AgentPlatformPackages.git@v1.1.0#subdirectory=packages/agent-db
 agent-auth @ git+https://github.com/Somesh123-create/AgentPlatformPackages.git@v1.1.0#subdirectory=packages/agent-auth

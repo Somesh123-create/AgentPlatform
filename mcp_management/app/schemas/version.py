@@ -22,3 +22,25 @@ class MCPVersionResponse(BaseModel):
     manifest: dict[str, object]
     created_at: datetime
     updated_at: datetime
+
+
+class MCPProjectResponse(BaseModel):
+    version_id: int
+    revision: int
+    files: dict[str, str]
+
+
+class MCPProjectFileUpdate(BaseModel):
+    path: str = Field(min_length=1, max_length=512)
+    content: str = Field(max_length=2 * 1024 * 1024)
+    revision: int
+
+
+class MCPProjectFolderCreate(BaseModel):
+    path: str = Field(min_length=1, max_length=512)
+    revision: int
+
+
+class MCPProjectFileDelete(BaseModel):
+    path: str = Field(min_length=1, max_length=512)
+    revision: int

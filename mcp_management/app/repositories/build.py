@@ -23,6 +23,15 @@ class BuildRepository:
         result = await self.db.execute(select(MCPBuild).where(MCPBuild.id == build_id))
         return result.scalar_one_or_none()
 
+    async def get_for_version(self, mcp_id: int, version_id: int) -> MCPBuild | None:
+        result = await self.db.execute(
+            select(MCPBuild)
+            .where(MCPBuild.mcp_id == mcp_id, MCPBuild.version_id == version_id)
+            .order_by(MCPBuild.created_at.desc(), MCPBuild.id.desc())
+            .limit(1)
+        )
+        return result.scalars().first()
+
     async def list_for_mcp(self, mcp_id: int) -> list[MCPBuild]:
         result = await self.db.execute(select(MCPBuild).where(MCPBuild.mcp_id == mcp_id).order_by(MCPBuild.created_at.desc()))
         return list(result.scalars().all())
@@ -36,8 +45,9 @@ class BuildRepository:
                 MCPBuild.status == "SUCCEEDED",
             )
             .order_by(MCPBuild.created_at.desc())
+            .limit(1)
         )
-        return result.scalar_one_or_none()
+        return result.scalars().first()
 
     async def save(self, build: MCPBuild) -> MCPBuild:
         try:
